@@ -15,20 +15,21 @@ try {
     `https://beta.todoist.com/API/v8/tasks?token=${TODOIST_API_TOKEN}&filter="today"`
   );
 
-  const body = res.getBody();
-  if (body) {
-    bodyJSON = JSON.parse(body);
+  const rawBody = res.getBody();
+  if (!rawBody) {
+    throw new Error('No body found');
   }
+  const body = JSON.parse(rawBody);
   const tasks = [];
-  if (bodyJSON && bodyJSON.length) {
-    for (var i = 0; i < Math.min(4, bodyJSON.length); i++) {
-      if (bodyJSON[i].content) {
-        const task = { text: bodyJSON[i].content, color: 'yellow' };
+  if (body && body.length) {
+    for (var i = 0; i < Math.min(4, body.length); i++) {
+      if (body[i].content) {
+        const task = { text: body[i].content, color: 'yellow' };
         if (i === 0) {
           tasks.push({ ...task, dropdown: false });
           tasks.push(bitbar.sep);
         }
-        tasks.push({ ...task, href: bodyJSON[i].url });
+        tasks.push({ ...task, href: body[i].url });
       }
     }
   } else {
