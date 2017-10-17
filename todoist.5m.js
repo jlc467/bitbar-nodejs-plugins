@@ -10,34 +10,36 @@ const TODOIST_API_TOKEN = '';
 const DONE_MESSAGE = 'Mindfulness';
 
 try {
-  const res = request(
+  const body = request(
     'GET',
     `https://beta.todoist.com/API/v8/tasks?token=${TODOIST_API_TOKEN}&filter="today"`
-  );
+  ).getBody();
 
-  const rawBody = res.getBody();
-  if (!rawBody) {
+  if (!body) {
     throw new Error('No body found');
   }
-  const body = JSON.parse(rawBody);
-  const tasks = [];
-  if (body && body.length) {
-    for (var i = 0; i < Math.min(4, body.length); i++) {
-      if (body[i].content) {
-        const task = { text: body[i].content, color: 'yellow' };
-        if (i === 0) {
-          tasks.push({ ...task, dropdown: false });
-          tasks.push(bitbar.sep);
-        }
-        tasks.push({ ...task, href: body[i].url });
+  const tasks = JSON.parse(body);
+  const bitbarItems = [];
+  if (tasks && tasks.length) {
+    const sortedTasks = tasks.sort((a, b) => b.priority - a.priority);
+    for (let i = 0; i < Math.min(4, sortedTasks.length); i++) {
+      const { content, priority, url } = sortedTasks[i];
+      const bitbarItem = {
+        text: priority === 4 ? `⚡${content}⚡` : content,
+        color: priority === 4 ? '#CD0005' : 'yellow'
+      };
+      if (i === 0) {
+        bitbarItems.push({ ...bitbarItem, dropdown: false });
+        bitbarItems.push(bitbar.sep);
       }
+      bitbarItems.push({ ...bitbarItem, href: url });
     }
   } else {
-    tasks.push({ text: DONE_MESSAGE, color: 'green' });
-    tasks.push(bitbar.sep);
-    tasks.push('Use breath as an anchor to the present moment.');
+    bitbarItems.push({ text: DONE_MESSAGE, color: 'green' });
+    bitbarItems.push(bitbar.sep);
+    bitbarItems.push('Use breath as an anchor to the present moment.');
   }
-  bitbar(tasks);
+  bitbar(bitbarItems);
 } catch (err) {
   bitbar(['Error :(']);
 }
